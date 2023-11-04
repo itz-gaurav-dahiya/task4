@@ -1,4 +1,18 @@
 let express=require('express');
+const {Client}=require('pg');
+const client=new Client({
+    user:'postgres',
+    password:'gaurav@Dahiya',
+    database:'postgres',
+    port:'5432',
+    host:'db.amfwwfhjovvvryqpgwpw.supabase.co',
+    ssl:{ rejectUnauthorized:false}
+})
+client.connect(function(res,error){
+    console.log(`Connected|||`);
+})
+
+
 let app=express();
 app.use(express.json());
 app.use(function(req,res,next){
@@ -23,6 +37,31 @@ let connData={
     database:'testDB'
 };
 
+
+app.get('/users',function(req,res,next){
+    console.log('inside / users get api');
+    const query='SELECT * FROM users';
+    client.query(query,function(err,result){
+        if(err) {res.status(404).send(err);}
+        res.send(result.rows);
+        client.end();
+    })
+})
+
+app.post('/user',function(req,res,next){
+    console.log('inside post fo user');
+    var values=Object.values(req.body);
+    console.log(values);
+    const query=`INSERT INTO users (email,firstname,lastname,age) VALUE($1,$2,$3,$4)`
+    client.query(query,values,function(err,result){
+        if(err){
+            res.status(400).send(err);
+
+        }
+       // console.log(result);
+       res.send(`${result.rowCount} insertion sucessful`)
+    })
+})
 // app.get('/svr/Mobiles',function(req,res){
 //     let brand=req.query.brand;
 //     let RAM=req.query.RAM;
