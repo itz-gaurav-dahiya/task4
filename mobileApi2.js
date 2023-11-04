@@ -1,150 +1,138 @@
-let express=require('express');
-const {Client}=require('pg');
+const express = require('express');
+const { Client } = require('pg');
 
-let app=express();
+const app = express();
 app.use(express.json());
-app.use(function(req,res,next){
-    res.header("Access-Control-Allow-Origin",'*');
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", '*');
     res.header(
         "Access-Control-Allow-Methods",
-        "GET,POST,OPTIONS,PUT,PATCH,DELETE,HEAD"
+        "GET, POST, OPTIONS, PUT, PATCH, DELETE, HEAD"
     );
     res.header(
         "Access-Control-Allow-Headers",
-        "Origin,X-Requested-With,Content-Type,Accept"
+        "Origin, X-Requested-With, Content-Type, Accept"
     );
     next();
 });
 
-var port=process.env.PORT || 2410;
-app.listen(port,()=>console.log(`Node app listening on port ${port}!`));
-const client=new Client({
-    user:'postgres',
-    password:'gaurav@Dahiya',
-    database:'postgres',
-    port:'5432',
-    host:'db.amfwwfhjovvvryqpgwpw.supabase.co',
-    ssl:{ rejectUnauthorized:false}
+const port = process.env.PORT || 2410;
+app.listen(port, () => console.log(`Node app listening on port ${port}!`));
+
+const client = new Client({
+    user: 'postgres', // Change to your PostgreSQL username
+    password: 'gaurav@Dahiya', // Change to your PostgreSQL password
+    database: 'postgres', // Change to your PostgreSQL database name
+    port: 5432,
+    host: 'db.amfwwfhjovvvryqpgwpw.supabase.co', // Change to your PostgreSQL database host
+    ssl: { rejectUnauthorized: false }
 });
-client.connect(function(res,error){
-    console.log(`Connected|||`);
-})
+
+client.connect(); // Connect without passing callback
+
 app.get('/svr/Mobiles', function (req, res) {
-    const brand = req.query.brand; // Brand should be a comma-separated string, e.g., "Apple,Samsung,Xiaomi"
-    const RAM = req.query.RAM; // RAM should be a comma-separated string, e.g., "4GB,8GB"
-    const ROM = req.query.ROM; // ROM should be a comma-separated string, e.g., "32GB,64GB"
-    
-    // const connection = mysql.createConnection(connData);
+    const brand = req.query.brand;
+    const RAM = req.query.RAM;
+    const ROM = req.query.ROM;
+
     let sql = 'SELECT * FROM products';
 
-    client.query(sql, function (err, result) {
+    client.query(sql, (err, result) => { // Use an arrow function
         if (err) {
             res.status(404).send(err.message);
         } else {
             if (brand) {
                 const brandArray = brand.split(',');
-                result = result.filter((product) => brandArray.includes(product.brand));
+                result.rows = result.rows.filter((product) => brandArray.includes(product.brand));
             }
             if (RAM) {
                 const RAMArray = RAM.split(',');
-                result = result.filter((product) => RAMArray.includes(product.ram));
+                result.rows = result.rows.filter((product) => RAMArray.includes(product.ram));
             }
             if (ROM) {
                 const ROMArray = ROM.split(',');
-                result = result.filter((product) => ROMArray.includes(product.rom));
+                result.rows = result.rows.filter((product) => ROMArray.includes(product.rom));
             }
-            res.send(result);
+            res.send(result.rows);
         }
     });
 });
 
 app.get('/svr/Mobiles/brand/:brand', function (req, res) {
     let brand = req.params.brand;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'SELECT * FROM productss WHERE brand = ?';
-    
-    client.query(sql, [brand], function (err, result) {
+    let sql = 'SELECT * FROM products WHERE brand = $1'; // Use parameterized query
+
+    client.query(sql, [brand], (err, result) => { // Use an arrow function
         if (err) {
             res.status(404).send(err.message);
         } else {
-            res.send(result);
+            res.send(result.rows); // Send the rows from the result
         }
     });
 });
 
 app.get('/svr/Mobiles/RAM/:RAM', function (req, res) {
-    let RAM = req.params.RAM;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'SELECT * FROM productss WHERE ram = ?';
-    
-    client.query(sql, [RAM], function (err, result) {
+    let RAM = req.params.RAM; // Get the RAM value from the URL
+    let sql = 'SELECT * FROM products WHERE ram = $1'; // Use parameterized query
+
+    client.query(sql, [RAM], (err, result) => { // Use an arrow function
         if (err) {
             res.status(404).send(err.message);
         } else {
-            res.send(result);
+            res.send(result.rows); // Send the rows from the result
         }
     });
 });
 
 app.get('/svr/Mobiles/ROM/:ROM', function (req, res) {
-    let ROM = req.params.ROM;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'SELECT * FROM productss WHERE rom = ?';
-    
-    client.query(sql, [ROM], function (err, result) {
+    let ROM = req.params.ROM; // Get the ROM value from the URL
+    let sql = 'SELECT * FROM products WHERE rom = $1'; // Use parameterized query
+
+    client.query(sql, [ROM], (err, result) => { // Use an arrow function
         if (err) {
             res.status(404).send(err.message);
         } else {
-            res.send(result);
+            res.send(result.rows); // Send the rows from the result
         }
     });
 });
 
 app.get('/svr/Mobiles/OS/:OS', function (req, res) {
-    let OS = req.params.OS;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'SELECT * FROM productss WHERE OS = ?';
-    
-    client.query(sql, [OS], function (err, result) {
+    let OS = req.params.OS; // Get the OS value from the URL
+    let sql = 'SELECT * FROM products WHERE os = $1'; // Use parameterized query
+
+    client.query(sql, [OS], (err, result) => { // Use an arrow function
         if (err) {
             res.status(404).send(err.message);
         } else {
-            res.send(result);
+            res.send(result.rows); // Send the rows from the result
         }
     });
 });
 
-
 app.post('/svr/Mobiles', function (req, res) {
-    let {name,price, brand, ram, rom, os} = req.body;
-    // let connection = mysql.createConnection(connData);
-
-    // Assuming 'productss' is the name of the table in your database
-    let sql = 'INSERT INTO productss (name, price, brand, ram, rom, os) VALUES (?, ?, ?, ?, ?, ?)';
+    let { name, price, brand, ram, rom, os } = req.body;
+    let sql = 'INSERT INTO products (name, price, brand, ram, rom, os) VALUES ($1, $2, $3, $4, $5, $6)'; // Use parameterized query
     let values = [name, price, brand, ram, rom, os];
 
-    client.query(sql, values, function (err, result) {
+    client.query(sql, values, (err, result) => { // Use an arrow function
         if (err) {
             res.status(400).send(err.message);
         } else {
             res.status(201).send('Mobile added successfully.');
         }
     });
-
-   
 });
-
 
 app.get('/svr/Mobile/:id', function (req, res) {
     let id = req.params.id;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'SELECT * FROM productss WHERE id = ?';
+    let sql = 'SELECT * FROM products WHERE id = $1'; // Use parameterized query
 
-    client.query(sql, [id], function (err, result) {
+    client.query(sql, [id], (err, result) => { // Use an arrow function
         if (err) {
             res.status(500).send(err.message);
         } else {
-            res.send(result[0]) // Sending the retrieved product data
+            res.send(result.rows[0]); // Sending the retrieved product data
         }
     });
 });
@@ -152,13 +140,10 @@ app.get('/svr/Mobile/:id', function (req, res) {
 app.put('/svr/Mobile/:id', function (req, res) {
     let id = req.params.id;
     let { name, price, brand, ram, rom, os } = req.body;
-    // let connection = mysql.createConnection(connData);
-
-    // Assuming 'productss' is the name of the table in your database
-    let sql = 'UPDATE productss SET name = ?, price = ?, brand = ?, ram = ?, rom = ?, os = ? WHERE id = ?';
+    let sql = 'UPDATE products SET name = $1, price = $2, brand = $3, ram = $4, rom = $5, os = $6 WHERE id = $7'; // Use parameterized query
     let values = [name, price, brand, ram, rom, os, id];
 
-    client.query(sql, values, function (err, result) {
+    client.query(sql, values, (err, result) => { // Use an arrow function
         if (err) {
             res.status(500).send(err.message);
         } else {
@@ -167,14 +152,11 @@ app.put('/svr/Mobile/:id', function (req, res) {
     });
 });
 
-
-
 app.delete('/svr/Mobile/:id', function (req, res) {
     let id = req.params.id;
-    // let connection = mysql.createConnection(connData);
-    let sql = 'DELETE FROM productss WHERE id = ?';
+    let sql = 'DELETE FROM products WHERE id = $1'; // Use parameterized query
 
-    client.query(sql, [id], function (err, result) {
+    client.query(sql, [id], (err, result) => { // Use an arrow function
         if (err) {
             res.status(500).send(err.message);
         } else {
